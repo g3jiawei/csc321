@@ -1,0 +1,162 @@
+Running validation...
+Validation cross-entropy: 2.748
+Validation error increasing!  Training stopped.
+
+Final training cross-entropy: 2.698
+Final validation cross-entropy: 2.748
+Final test cross-entropy: 2.751 
+
+def compute_loss_derivative(self, output_activations, expanded_target_batch):
+    """Compute the derivative of the cross-entropy loss function with respect to the inputs
+    to the output units. In particular, the output layer computes the softmax
+
+        y_i = e^{z_i} / \sum_j e^{z_j}.
+
+    This function should return a batch_size x vocab_size matrix, where the (i, j) entry
+    is dC / dz_j computed for the ith training case, where C is the loss function
+
+        C = -sum(t_i log y_i).
+
+    The arguments are as follows:
+
+        output_activations - the activations of the output layer, i.e. the y_i's.
+        expanded_target_batch - each row is the indicator vector for a target word,
+            i.e. the (i, j) entry is 1 if the i'th word is j, and 0 otherwise."""
+    
+    ###########################   YOUR CODE HERE  ##############################
+    
+    return (output_activations - expanded_target_batch)
+
+    ############################################################################
+
+def back_propagate(self, input_batch, activations, loss_derivative):
+    """Compute the gradient of the loss function with respect to the trainable parameters
+    of the model. The arguments are as follows:
+
+         input_batch - the indices of the context words
+         activations - an Activations class representing the output of Model.compute_activations
+         loss_derivative - the matrix of derivatives computed by compute_loss_derivative
+         
+    Part of this function is already completed, but you need to fill in the derivative
+    computations for hid_to_output_weights_grad, output_bias_grad, embed_to_hid_weights_grad,
+    and hid_bias_grad. See the documentation for the Params class for a description of what
+    these matrices represent."""
+    
+    # The matrix with values dC / dz_j, where dz_j is the input to the jth hidden unit,
+    # i.e. y_j = 1 / (1 + e^{-z_j})
+    hid_deriv = np.dot(loss_derivative, self.params.hid_to_output_weights) \
+                * activations.hidden_layer * (1. - activations.hidden_layer)
+
+
+    ###########################   YOUR CODE HERE  ##############################
+    ''' BACK PROPAGATE.'''
+     
+    '''%% OUTPUT LAYER.'''
+    hid_to_output_weights_grad = np.dot(loss_derivative.T, activations.hidden_layer)
+    output_bias_grad = sum(loss_derivative)
+    
+    '''%% HIDDEN LAYER.'''
+    embed_to_hid_weights_grad = np.dot(hid_deriv.T, activations.embedding_layer)
+    hid_bias_grad = sum(hid_deriv)
+
+    
+    ############################################################################
+    
+In [7]: check_gradients()
+The loss derivative looks OK.
+The gradient for word_embedding_weights looks OK.
+The gradient for embed_to_hid_weights looks OK.
+The gradient for hid_to_output_weights looks OK.
+The gradient for hid_bias looks OK.
+The gradient for output_bias looks OK.
+
+1.
+In [25]: model.predict_next_word("government","of","united",3)
+government of united own Prob: 0.18486
+government of united life Prob: 0.10271
+government of united states Prob: 0.05529
+
+In [26]: model.predict_next_word("city","of","new",3)
+city of new york Prob: 0.95655
+city of new . Prob: 0.01289
+city of new ? Prob: 0.00451
+
+In [27]: model.predict_next_word("life","in","the",3)
+life in the world Prob: 0.15953
+life in the game Prob: 0.07801
+life in the united Prob: 0.05246
+
+In [28]: model.predict_next_word("he","is","the",3)
+he is the best Prob: 0.26497
+he is the same Prob: 0.13878
+he is the only Prob: 0.10073
+
+
+In [36]: language_model.find_occurrences("government","of","united")
+The tri-gram "government of united" did not occur in the training set.
+
+In [37]: language_model.find_occurrences("city","of","new")
+The tri-gram "city of new" was followed by the following words in the training set:
+    york (8 times)
+
+In [35]: language_model.find_occurrences("life","in","the")
+The tri-gram "life in the" was followed by the following words in the training set:
+    big (7 times)
+    united (2 times)
+    department (1 time)
+    world (1 time)
+
+In [38]: language_model.find_occurrences("he","is","the")
+The tri-gram "he is the" was followed by the following words in the training set:
+    one (4 times)
+    only (4 times)
+    president (4 times)
+    man (4 times)
+    best (2 times)
+    city (1 time)
+    group (1 time)
+    government (1 time)
+    first (1 time)
+    second (1 time)
+    same (1 time)
+    director (1 time)
+    show (1 time)
+    next (1 time)
+    public (1 time)
+
+2.
+
+3.
+In [39]: model.display_nearest_words("new")
+big: 2.92249945907
+old: 2.94013049169
+white: 2.94443995216
+american: 3.10993405566
+several: 3.15594828349
+five: 3.21237059562
+its: 3.2310012505
+federal: 3.25360165364
+political: 3.27289919623
+our: 3.28804123264
+
+In [40]: model.display_nearest_words("york")
+national: 1.02674551089
+states: 1.04705511199
+ms.: 1.05459599604
+?: 1.07352287508
+school: 1.1088803254
+west: 1.11821283529
+music: 1.13473474654
+former: 1.15228657864
+university: 1.17639509877
+general: 1.17949132688
+
+In [29]: model.word_distance("new","york")
+Out[29]: 3.9224628551052767
+
+4.
+In [30]: model.word_distance("government","political")
+Out[30]: 1.4771193581714717
+
+In [31]: model.word_distance("government","university")
+Out[31]: 0.98818426333020293
